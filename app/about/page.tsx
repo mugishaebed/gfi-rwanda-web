@@ -120,7 +120,7 @@ export default function AboutPage() {
               <div className="w-8 h-0.5 bg-[#36e17b] rounded-full" />
               <h3 className="text-2xl md:text-3xl font-bold text-gray-900">Mission</h3>
               <p className="text-gray-600 leading-relaxed text-base">
-                To mobilise purpose-driven capital for green and sustainable projects across Rwanda — providing SMEs and entrepreneurs with accessible financing, expert advisory, and the tools to grow responsibly. We are committed to building a lending institution that measures success not only in financial returns, but in environmental stewardship and community impact.
+                To empower businesses by providing fast, accessible, and affordable financing solutions that drive economic growth, environmental conservation, and job creation.
               </p>
             </div>
           </FadeIn>
@@ -140,7 +140,7 @@ export default function AboutPage() {
               <div className="w-8 h-0.5 bg-[#36e17b] rounded-full" />
               <h3 className="text-2xl md:text-3xl font-bold text-gray-900">Vision</h3>
               <p className="text-gray-600 leading-relaxed text-base">
-                To be Rwanda's most trusted green finance institution — a recognised leader in climate-aligned lending and sustainable advisory by 2030. We envision a Rwanda where every entrepreneur has access to the capital and knowledge needed to build businesses that are profitable, planet-positive, and people-centred, contributing boldly to Vision 2050.
+                To be the leading financing institution in Rwanda and the region, fostering a sustainable and resilient economy through innovative financial solutions and strategic partnerships.
               </p>
             </div>
           </FadeIn>

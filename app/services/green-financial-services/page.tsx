@@ -13,42 +13,42 @@ const steps = [
     title: 'Application',
     description:
       'The borrower submits a loan application to GFI, either in person or through our team. The application captures key details about the project, business background, financing needs, and the expected environmental or community impact.',
-    image: '/about.png',
+    image: '/step-1.png',
   },
   {
     number: '02',
     title: 'Documentation & Verification',
     description:
       'GFI requests supporting documents from the borrower — including identification, income statements, business records, and collateral details where applicable. Our team verifies the information to assess eligibility and creditworthiness.',
-    image: '/hero.png',
+    image: '/step-2.png',
   },
   {
     number: '03',
     title: 'Credit Assessment',
     description:
       'A thorough credit assessment is conducted to evaluate the borrower\'s ability to repay. This involves analysing financial history, income stability, debt-to-income ratio, and the viability of the proposed green project.',
-    image: '/about.png',
+    image: '/step-3.png',
   },
   {
     number: '04',
     title: 'Loan Approval',
     description:
       'If the borrower meets GFI\'s lending criteria and passes the credit assessment, the loan is approved. We determine the loan amount, interest rate, repayment schedule, and any conditions attached to the disbursement.',
-    image: '/hero.png',
+    image: '/step-4.png',
   },
   {
     number: '05',
     title: 'Disbursement',
     description:
       'Funds are released to the borrower in line with the agreed terms. GFI ensures that disbursement is timely and structured to support the project\'s implementation plan and cash flow requirements.',
-    image: '/about.png',
+    image: '/step-5.png',
   },
   {
     number: '06',
     title: 'Monitoring & Recovery',
     description:
       'Throughout the loan period, GFI actively monitors project progress and loan performance. Our team maintains open communication with borrowers and manages repayment professionally — protecting capital while sustaining the relationship.',
-    image: '/hero.png',
+    image: '/step-6.png',
   },
 ];
 
