@@ -51,12 +51,6 @@ export default function Navbar() {
 
           {/* Right actions */}
           <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              Sign in
-            </Link>
             <a
               href="/contact"
               className="bg-[#36e17b] text-white px-6 py-2.5 rounded-full font-medium hover:bg-[#00b835] transition-colors"
