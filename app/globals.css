@@ -66,3 +66,10 @@ body {
   from { opacity: 0; transform: translateY(-100%); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* Rich text editor placeholder */
+[data-rte-placeholder]:empty::before {
+  content: attr(data-rte-placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+}

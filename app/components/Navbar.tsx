@@ -12,7 +12,7 @@ export default function Navbar() {
     { href: '/about', label: 'About Us' },
     { href: '/#services', label: 'Services' },
     { href: '/#why-gfi', label: 'Why GFI' },
-    { href: '/#blogs', label: 'Blogs' },
+    { href: '/blog', label: 'Blogs' },
   ];
 
   return (

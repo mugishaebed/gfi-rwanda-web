@@ -1,95 +1,100 @@
-import Image from 'next/image';
+/* eslint-disable @next/next/no-img-element */
+
+import Link from 'next/link';
 import FadeIn from './FadeIn';
+import { getBlogs } from '@/lib/api/blogs';
+import { formatBlogDate, formatBlogTime, resolveMediaUrl } from '@/lib/blog-utils';
+import type { Blog } from '@/types/blog';
 
-const posts = [
-  {
-    slug: 'umuganura-export-company-loan',
-    title:
-      'Growing Together: How Our First Loan\'s Impact with Umuganura Export Company Ltd is Cultivating Sustainability in Rwanda\'s Coffee Sector',
-    excerpt:
-      'At Green Financing Incorporate, we believe that every strong tree begins as a carefully nurtured seed. Today we are planting a seed of possibility — one that will grow far beyond the financial value alone. We are proud to support Umuganura Export Company Ltd, a Rwandan-owned coffee processing and trading firm, in its mission to empower local farmers and champion sustainability in agriculture.',
-    date: 'April 8, 2026',
-    time: '09:00 AM',
-    image: '/about.png',
-  },
-  {
-    slug: 'green-finance-vision-2050',
-    title:
-      'Mobilising Climate Capital: GFI\'s Role in Advancing Rwanda\'s Vision 2050 Green Economy Goals',
-    excerpt:
-      'Rwanda\'s Vision 2050 sets an ambitious target for a prosperous, knowledge-based economy built on sustainable foundations. Green Financing Incorporate stands at the intersection of capital access and climate action — bridging the gap between green ambitions and the funding needed to realise them.',
-    date: 'March 21, 2026',
-    time: '10:30 AM',
-    image: '/hero.png',
-  },
-];
+export default async function Blogs() {
+  let posts: Blog[] = [];
 
-export default function Blogs() {
+  try {
+    const response = await getBlogs(1, 2);
+    posts = response.data;
+  } catch {
+    posts = [];
+  }
+
   return (
-    <section id="blogs" className="w-full py-20 md:py-28 bg-white">
+    <section id="blogs" className="w-full bg-white py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-6 md:px-12">
-
-        {/* Header */}
         <FadeIn className="mb-12">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#36e17b] mb-3">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#36e17b]">
             Latest News
           </p>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">
             Insights & Updates
           </h2>
-          <p className="text-base text-gray-500 max-w-lg leading-relaxed">
+          <p className="max-w-lg text-base leading-relaxed text-gray-500">
             Stay updated with the latest news, stories, and developments from GFI Rwanda.
           </p>
         </FadeIn>
 
-        {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {posts.map((post, i) => (
-            <FadeIn key={post.slug} delay={i * 120}>
-              <a
-                href={`/blog/${post.slug}`}
-                className="group flex flex-col border border-gray-100 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow duration-300 h-full"
-              >
-                {/* Image */}
-                <div className="overflow-hidden">
-                  <Image
-                    src={post.image}
-                    alt={post.title}
-                    width={800}
-                    height={420}
-                    className="w-full h-60 object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105"
-                  />
-                </div>
-
-                {/* Content */}
-                <div className="flex flex-col gap-4 p-7 flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 leading-snug group-hover:text-[#36e17b] transition-colors">
-                    {post.title}
-                  </h3>
-
-                  {/* Meta */}
-                  <div className="flex items-center gap-3 text-xs text-gray-400">
-                    <span className="border border-gray-200 rounded-full px-3 py-1">
-                      {post.date}
-                    </span>
-                    <span className="border border-gray-200 rounded-full px-3 py-1">
-                      {post.time}
-                    </span>
-                  </div>
-
-                  <p className="text-sm text-gray-500 leading-relaxed flex-1">
-                    {post.excerpt}
-                  </p>
-
-                  <span className="inline-flex items-center gap-2 text-sm font-medium text-[#36e17b] mt-2 group-hover:gap-3 transition-all">
-                    Read more →
-                  </span>
-                </div>
-              </a>
-            </FadeIn>
-          ))}
+        <div className="mb-8 flex justify-end">
+          <Link
+            href="/blog"
+            className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            Browse all articles
+          </Link>
         </div>
 
+        {posts.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-gray-200 px-8 py-14 text-center">
+            <p className="text-sm text-gray-500">
+              Blog posts will appear here once the API is reachable and content is published.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            {posts.map((post, index) => (
+              <FadeIn key={post.id} delay={index * 120}>
+                <Link
+                  href={`/blog/${post.id}`}
+                  className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-100 transition-shadow duration-300 hover:shadow-lg"
+                >
+                  <div className="overflow-hidden bg-gray-100">
+                    {resolveMediaUrl(post.thumbnailUrl) ? (
+                      <img
+                        src={resolveMediaUrl(post.thumbnailUrl) ?? ''}
+                        alt={post.title}
+                        className="h-60 w-full object-cover grayscale transition-all duration-500 group-hover:scale-105 group-hover:grayscale-0"
+                      />
+                    ) : (
+                      <div className="flex h-60 items-center justify-center bg-[#edf8f0] text-sm font-medium text-[#1f8a44]">
+                        GFI Rwanda
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-1 flex-col gap-4 p-7">
+                    <h3 className="text-lg font-semibold leading-snug text-gray-900 transition-colors group-hover:text-[#36e17b]">
+                      {post.title}
+                    </h3>
+
+                    <div className="flex items-center gap-3 text-xs text-gray-400">
+                      <span className="rounded-full border border-gray-200 px-3 py-1">
+                        {formatBlogDate(post.createdAt)}
+                      </span>
+                      <span className="rounded-full border border-gray-200 px-3 py-1">
+                        {formatBlogTime(post.createdAt)}
+                      </span>
+                    </div>
+
+                    <p className="flex-1 text-sm leading-relaxed text-gray-500">
+                      {post.shortDescription}
+                    </p>
+
+                    <span className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-[#36e17b] transition-all group-hover:gap-3">
+                      Read more →
+                    </span>
+                  </div>
+                </Link>
+              </FadeIn>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
