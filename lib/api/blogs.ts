@@ -41,7 +41,7 @@ export async function getBlog(id: string): Promise<Blog> {
 }
 
 export async function createBlog(token: string, payload: CreateBlogPayload): Promise<Blog> {
-  const response = await fetch(buildUrl('/v1/blogs'), {
+  const response = await fetch(buildUrl('/blogs'), {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,

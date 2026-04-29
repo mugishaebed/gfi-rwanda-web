@@ -3,36 +3,104 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/lib/auth-context';
-import { parseJwt } from '@/app/lib/auth-api';
+import { parseRoles } from '@/app/lib/auth-api';
+
+type AuthCallbackParams = {
+  authStatus: string | null;
+  provider: string | null;
+  action: string | null;
+  appAccessToken: string | null;
+  refreshToken: string | null;
+  userId: string | null;
+  email: string | null;
+  name: string | null;
+  roles: string[];
+  state: string | null;
+};
+
+function getCallbackParams(): AuthCallbackParams {
+  const searchParams = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.slice(1));
+  const params = searchParams.toString() ? searchParams : hashParams;
+  const roleParams = [...params.getAll('roles'), ...params.getAll('roles[]')];
+
+  return {
+    authStatus: params.get('authStatus'),
+    provider: params.get('provider'),
+    action: params.get('action'),
+    appAccessToken: params.get('appAccessToken'),
+    refreshToken: params.get('refreshToken'),
+    userId: params.get('userId'),
+    email: params.get('email'),
+    name: params.get('name'),
+    roles: parseRoles(roleParams.length ? roleParams : params.get('roles')),
+    state: params.get('state'),
+  };
+}
+
+function failedAuthStatus(authStatus: string | null) {
+  if (!authStatus) return false;
+  return ['error', 'failed', 'failure', 'denied', 'unauthorized'].includes(
+    authStatus.toLowerCase(),
+  );
+}
+
+function safeDashboardRedirect(state: string | null) {
+  if (!state || !state.startsWith('/dashboard') || state.startsWith('//')) {
+    return '/dashboard/blog';
+  }
+
+  return state;
+}
 
 export default function CallbackPage() {
-  const { setTokens } = useAuth();
-  const router        = useRouter();
+  const { setSession } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    // Backend redirects to: {FRONTEND_URL}/auth/callback#token=<jwt>&refresh=<token>&action=login
-    const params  = new URLSearchParams(window.location.hash.slice(1));
-    const token   = params.get('token');
-    const refresh = params.get('refresh');
+    const callback = getCallbackParams();
 
     // Strip tokens from browser history immediately
     window.history.replaceState(null, '', window.location.pathname);
 
-    if (!token || !refresh) {
+    if (failedAuthStatus(callback.authStatus)) {
+      router.replace('/auth/login?error=auth_failed');
+      return;
+    }
+
+    if (callback.provider?.toLowerCase() !== 'microsoft') {
+      router.replace('/auth/login?error=unsupported_provider');
+      return;
+    }
+
+    if (!callback.appAccessToken || !callback.refreshToken) {
       router.replace('/auth/login?error=missing_tokens');
       return;
     }
 
-    // Verify the user carries the BLOG_EDITOR role before granting access
-    const payload = parseJwt(token);
-    if (!payload?.roles?.includes('BLOG_EDITOR')) {
+    if (!callback.userId || !callback.email) {
+      router.replace('/auth/login?error=missing_profile');
+      return;
+    }
+
+    if (!callback.roles.includes('BLOG_EDITOR')) {
       router.replace('/auth/login?error=unauthorized');
       return;
     }
 
-    setTokens(token, refresh);
-    router.replace('/dashboard/blog');
-  }, [setTokens, router]);
+    setSession({
+      appAccessToken: callback.appAccessToken,
+      refreshToken: callback.refreshToken,
+      user: {
+        userId: callback.userId,
+        email: callback.email,
+        name: callback.name || callback.email,
+        roles: callback.roles,
+        provider: callback.provider,
+      },
+    });
+    router.replace(safeDashboardRedirect(callback.state));
+  }, [setSession, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

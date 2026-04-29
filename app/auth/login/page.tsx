@@ -1,43 +1,49 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/app/lib/auth-context';
-import { googleLoginUrl, googleSignupUrl } from '@/app/lib/auth-api';
+import { microsoftLoginUrl, microsoftSignupUrl } from '@/app/lib/auth-api';
 
-function GoogleLogo() {
+function MicrosoftLogo() {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-      <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908C16.658 14.113 17.64 11.805 17.64 9.2z"/>
-      <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-      <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
-      <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
-    </svg>
+    <span className="grid h-[18px] w-[18px] grid-cols-2 gap-0.5" aria-hidden>
+      <span className="bg-[#f25022]" />
+      <span className="bg-[#7fba00]" />
+      <span className="bg-[#00a4ef]" />
+      <span className="bg-[#ffb900]" />
+    </span>
   );
 }
 
 const errorMessages: Record<string, string> = {
   missing_tokens: 'Authentication failed. Please try again.',
+  missing_profile: 'Authentication failed to return your profile. Please try again.',
+  auth_failed:     'Microsoft authentication failed. Please try again.',
+  unsupported_provider: 'Please sign in with Microsoft.',
   unauthorized:   'Your account does not have blog editor access.',
   default:        'Something went wrong. Please try again.',
 };
 
 export default function LoginPage() {
-  const { token, isLoading } = useAuth();
-  const router               = useRouter();
-  const [error, setError]    = useState<string | null>(null);
-
-  // Read error from URL search params without useSearchParams (no Suspense needed)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setError(params.get('error'));
-  }, []);
+  const { appAccessToken, isLoading } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const error = searchParams.get('error');
 
   // Already authenticated → go straight to the dashboard
   useEffect(() => {
-    if (!isLoading && token) router.replace('/dashboard/blog');
-  }, [token, isLoading, router]);
+    if (!isLoading && appAccessToken) router.replace('/dashboard/blog');
+  }, [appAccessToken, isLoading, router]);
+
+  const startMicrosoftLogin = () => {
+    window.location.assign(microsoftLoginUrl(window.location.origin));
+  };
+
+  const startMicrosoftSignup = () => {
+    window.location.assign(microsoftSignupUrl(window.location.origin));
+  };
 
   if (isLoading) {
     return (
@@ -61,7 +67,7 @@ export default function LoginPage() {
         <div className="mb-7 text-center">
           <h1 className="text-xl font-bold text-gray-900">Blog Editor Access</h1>
           <p className="text-sm text-gray-500 mt-1.5">
-            Sign in with your approved Google account
+            Sign in with your approved Microsoft account
           </p>
         </div>
 
@@ -73,13 +79,14 @@ export default function LoginPage() {
 
         <div className="flex flex-col gap-3">
           {/* Returning user */}
-          <a
-            href={googleLoginUrl()}
+          <button
+            type="button"
+            onClick={startMicrosoftLogin}
             className="flex items-center justify-center gap-3 w-full rounded-2xl border border-gray-200 bg-white px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            <GoogleLogo />
-            Sign in with Google
-          </a>
+            <MicrosoftLogo />
+            Sign in with Microsoft
+          </button>
 
           <div className="flex items-center gap-3">
             <span className="flex-1 h-px bg-gray-100" />
@@ -88,13 +95,14 @@ export default function LoginPage() {
           </div>
 
           {/* First-time signup — BLOG_EDITOR role only */}
-          <a
-            href={googleSignupUrl()}
+          <button
+            type="button"
+            onClick={startMicrosoftSignup}
             className="flex items-center justify-center gap-3 w-full rounded-2xl bg-[#36e17b] px-5 py-3 text-sm font-medium text-white hover:bg-[#00d63b] transition-colors"
           >
-            <GoogleLogo />
+            <MicrosoftLogo />
             Create editor account
-          </a>
+          </button>
         </div>
       </div>
 

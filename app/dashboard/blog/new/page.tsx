@@ -3,12 +3,10 @@
 import BlogEditor from '../../components/BlogEditor';
 import { useAuth } from '@/app/lib/auth-context';
 import { createBlog } from '@/lib/api/blogs';
-import type { BlogPost } from '@/app/lib/blog-types';
+import type { BlogEditorFormData } from '../../components/BlogEditor';
 import type { CreateBlogPayload } from '@/types/blog';
 
-type FormData = Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>;
-
-function toCreatePayload(data: FormData): CreateBlogPayload {
+function toCreatePayload(data: BlogEditorFormData): CreateBlogPayload {
   return {
     title: data.title,
     shortDescription: data.shortDescription || undefined,
@@ -29,7 +27,7 @@ export default function NewBlogPage() {
       pageTitle="New Post"
       hideDraftAction
       publishLabel="Create post →"
-      onSubmit={async (data: FormData) => {
+      onSubmit={async (data: BlogEditorFormData) => {
         const token = await getValidToken();
 
         if (!token) {

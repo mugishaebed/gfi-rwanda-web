@@ -251,10 +251,12 @@ function BlockEditor({
 // ─── Live preview ─────────────────────────────────────────────────────────────
 
 function Preview({
-  title, coverImage, date, time, shortDescription, blocks,
+  title, coverImage, shortDescription, blocks,
 }: {
-  title: string; coverImage: string; date: string;
-  time: string; shortDescription: string; blocks: ParagraphBlock[];
+  title: string;
+  coverImage: string;
+  shortDescription: string;
+  blocks: ParagraphBlock[];
 }) {
   const hasAny =
     title || coverImage || shortDescription || blocks.some((b) => b.title || b.body || b.image);
@@ -282,14 +284,6 @@ function Preview({
           {coverImage && (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img src={coverImage} alt="" className="w-full h-44 object-cover rounded-2xl mb-5" />
-          )}
-
-          {/* Date chips */}
-          {(date || time) && (
-            <div className="flex gap-2 mb-4">
-              {date && <span className="text-xs border border-gray-200 rounded-full px-3 py-1 text-gray-400">{date}</span>}
-              {time && <span className="text-xs border border-gray-200 rounded-full px-3 py-1 text-gray-400">{time}</span>}
-            </div>
           )}
 
           {/* Title */}
@@ -346,11 +340,14 @@ function Preview({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-type FormData = Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>;
+export type BlogEditorFormData = Omit<
+  BlogPost,
+  'id' | 'createdAt' | 'updatedAt' | 'date' | 'time' | 'tags'
+>;
 
 type Props = {
   initialValues?: Partial<BlogPost>;
-  onSubmit: (data: FormData) => Promise<void> | void;
+  onSubmit: (data: BlogEditorFormData) => Promise<void> | void;
   pageTitle: string;
   hideDraftAction?: boolean;
   publishLabel?: string;
@@ -370,9 +367,6 @@ export default function BlogEditor({
   const [slugTouched, setSlugTouched] = useState(!!initialValues?.slug);
   const [shortDescription, setShortDescription] = useState(initialValues?.shortDescription ?? '');
   const [coverImage, setCoverImage]   = useState(initialValues?.image   ?? '');
-  const [date, setDate]               = useState(initialValues?.date    ?? '');
-  const [time, setTime]               = useState(initialValues?.time    ?? '');
-  const [tagsInput, setTagsInput]     = useState(initialValues?.tags?.join(', ') ?? '');
   const [blocks, setBlocks]           = useState<ParagraphBlock[]>(
     initialValues?.blocks?.length ? initialValues.blocks : [newBlock()],
   );
@@ -418,7 +412,6 @@ export default function BlogEditor({
     if (!validate()) return;
     setIsSaving(true);
     setSubmitError(null);
-    const now = new Date();
 
     try {
       await onSubmit({
@@ -438,17 +431,7 @@ export default function BlogEditor({
           .join('\n\n'),
         blocks,
         image: coverImage,
-        date:
-          date.trim() ||
-          now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-        time:
-          time.trim() ||
-          now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
         status: targetStatus,
-        tags: tagsInput
-          .split(',')
-          .map((t) => t.trim())
-          .filter(Boolean),
       });
       router.push('/dashboard/blog');
     } catch (error) {
@@ -561,17 +544,6 @@ export default function BlogEditor({
                 {errors.slug && <p className="text-xs text-red-500">{errors.slug}</p>}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-gray-900">Date</label>
-                  <input type="text" value={date} onChange={(e) => setDate(e.target.value)} placeholder="April 8, 2026" className={input} />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-gray-900">Time</label>
-                  <input type="text" value={time} onChange={(e) => setTime(e.target.value)} placeholder="09:00 AM" className={input} />
-                </div>
-              </div>
-
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-gray-900">Short description</label>
                 <textarea
@@ -616,23 +588,6 @@ export default function BlogEditor({
               </div>
             </section>
 
-            {/* Settings */}
-            <section className="space-y-5 pb-10">
-              <p className={sectionHead}>Settings</p>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-900">Tags</label>
-                <input
-                  type="text"
-                  value={tagsInput}
-                  onChange={(e) => setTagsInput(e.target.value)}
-                  placeholder="coffee, sustainability, agriculture"
-                  className={input}
-                />
-                <p className="text-xs text-gray-400">Comma-separated</p>
-              </div>
-            </section>
-
           </div>
         </div>
 
@@ -641,8 +596,6 @@ export default function BlogEditor({
           <Preview
             title={title}
             coverImage={coverImage}
-            date={date}
-            time={time}
             shortDescription={shortDescription}
             blocks={blocks}
           />

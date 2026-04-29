@@ -5,19 +5,19 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/lib/auth-context';
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { token, user, isLoading } = useAuth();
+  const { appAccessToken, roles, isLoading } = useAuth();
   const router = useRouter();
 
-  const hasBlogEditorRole = token && user?.roles?.includes('BLOG_EDITOR');
+  const hasBlogEditorRole = appAccessToken && roles.includes('BLOG_EDITOR');
 
   useEffect(() => {
     if (isLoading) return;
-    if (!token) {
+    if (!appAccessToken) {
       router.replace('/auth/login');
     } else if (!hasBlogEditorRole) {
       router.replace('/auth/login?error=unauthorized');
     }
-  }, [isLoading, token, hasBlogEditorRole, router]);
+  }, [isLoading, appAccessToken, hasBlogEditorRole, router]);
 
   // Show spinner while the session is being restored from localStorage
   if (isLoading) {

@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/app/lib/auth-context';
+import { microsoftLogoutUrl } from '@/app/lib/auth-api';
 
 const nav = [
   {
@@ -22,13 +23,12 @@ const nav = [
 ];
 
 export default function Sidebar() {
-  const pathname      = usePathname();
-  const router        = useRouter();
+  const pathname = usePathname();
   const { user, logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
-    router.replace('/auth/login');
+    window.location.assign(microsoftLogoutUrl(window.location.origin));
   };
 
   return (
