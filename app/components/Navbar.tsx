@@ -3,14 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/app/lib/auth-context';
-
 export default function Navbar() {
   const pathname = usePathname();
-  const { accessToken, roles } = useAuth();
-  const clientPortalHref = accessToken && roles.includes('CLIENT')
-    ? '/loan-portal'
-    : '/auth/client';
 
   const navLinks = [
     { href: '/', label: 'Home' },
@@ -32,7 +26,7 @@ export default function Navbar() {
               width={140}
               height={50}
               loading='eager'
-              className="h-12 w-auto"
+              style={{ width: 'auto', height: '3rem' }}
             />
           </Link>
 
@@ -56,12 +50,6 @@ export default function Navbar() {
 
           {/* Right actions */}
           <div className="flex items-center gap-3">
-            <Link
-              href={clientPortalHref}
-              className="hidden rounded-full border border-gray-200 px-5 py-2.5 font-medium text-gray-700 transition-colors hover:border-gray-300 hover:text-gray-900 sm:inline-flex"
-            >
-              Loan portal
-            </Link>
             <a
               href="/contact"
               className="bg-[#36e17b] text-white px-6 py-2.5 rounded-full font-medium hover:bg-[#00b835] transition-colors"

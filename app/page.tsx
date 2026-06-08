@@ -11,7 +11,6 @@ export default function Home() {
       <Hero
         heading="Financing a Green Rwanda"
         description="Green Financing Incorporate Ltd (GFI Ltd) is Rwanda's dedicated green lending and advisory institution — mobilising capital for sustainable projects, empowering businesses, and building a prosperous low-carbon economy."
-        buttonText="Get started"
         imageSrc="/hero.png"
         imageAlt="Illustration of green financing and sustainable development"
       />

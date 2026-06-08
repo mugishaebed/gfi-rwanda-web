@@ -35,20 +35,22 @@ export default function Hero({
             >
               {description}
             </p>
-            <div style={{ animation: 'fade-up 0.7s ease 240ms both' }}>
-              {buttonHref ? (
-                <a
-                  href={buttonHref}
-                  className="inline-flex items-center justify-center rounded-full px-8 py-3 font-medium text-[#36e17b] border-2 border-[#36e17b] bg-transparent hover:bg-[#36e17b] hover:text-white transition-colors w-fit"
-                >
-                  {buttonText}
-                </a>
-              ) : (
-                <button className="inline-flex items-center justify-center rounded-full px-8 py-3 font-medium text-[#36e17b] border-1 border-[#36e17b] bg-transparent hover:bg-[#36e17b] hover:text-white transition-colors cursor-pointer">
-                  {buttonText}
-                </button>
-              )}
-            </div>
+            {buttonText && (
+              <div style={{ animation: 'fade-up 0.7s ease 240ms both' }}>
+                {buttonHref ? (
+                  <a
+                    href={buttonHref}
+                    className="inline-flex items-center justify-center rounded-full px-8 py-3 font-medium text-[#36e17b] border-2 border-[#36e17b] bg-transparent hover:bg-[#36e17b] hover:text-white transition-colors w-fit"
+                  >
+                    {buttonText}
+                  </a>
+                ) : (
+                  <button className="inline-flex items-center justify-center rounded-full px-8 py-3 font-medium text-[#36e17b] border-1 border-[#36e17b] bg-transparent hover:bg-[#36e17b] hover:text-white transition-colors cursor-pointer">
+                    {buttonText}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Image */}
