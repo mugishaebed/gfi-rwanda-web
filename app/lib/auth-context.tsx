@@ -8,7 +8,16 @@ import {
   useRef,
   useState,
 } from 'react';
-import { apiLogout, apiRefresh, isExpiringSoon, parseJwt, type AuthUser } from './auth-api';
+import {
+  apiLogout,
+  apiRefresh,
+  parseClientOnboardingStatus,
+  isExpiringSoon,
+  parseJwt,
+  parseRoles,
+  type ClientOnboardingStatus,
+  type AuthUser,
+} from './auth-api';
 
 const ACCESS_KEY = 'gfi_app_access_token';
 const REFRESH_KEY = 'gfi_refresh_token';
@@ -21,15 +30,20 @@ type AuthSession = {
 };
 
 type AuthCtx = {
+  accessToken: string | null;
   appAccessToken: string | null;
   refreshToken: string | null;
   token: string | null;
+  userId: string | null;
   user: AuthUser | null;
   roles: string[];
+  clientOnboardingStatus: ClientOnboardingStatus | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
   setSession: (session: AuthSession) => void;
   setTokens: (appAccessToken: string, refreshToken: string, user?: Partial<AuthUser>) => void;
   getValidToken: () => Promise<string | null>;
+  refreshSession: () => Promise<string | null>;
   logout: () => Promise<void>;
 };
 
@@ -48,6 +62,9 @@ function readStoredUser(): AuthUser | null {
       email: user.email,
       name: user.name ?? user.email,
       roles: Array.isArray(user.roles) ? user.roles : [],
+      clientOnboardingStatus: parseClientOnboardingStatus(
+        user.clientOnboardingStatus,
+      ),
       provider: user.provider,
     };
   } catch {
@@ -72,8 +89,16 @@ function mergeProfile(
     email: update?.email ?? base?.email,
     name: update?.name ?? base?.name,
     roles: update?.roles?.length ? update.roles : base?.roles,
+    clientOnboardingStatus:
+      update?.clientOnboardingStatus ?? base?.clientOnboardingStatus,
     provider: update?.provider ?? base?.provider,
   };
+}
+
+function needsFreshClientStatus(user: AuthUser | null) {
+  return Boolean(
+    user?.roles.includes('CLIENT') && !user.clientOnboardingStatus,
+  );
 }
 
 function userFromToken(
@@ -90,7 +115,8 @@ function userFromToken(
     userId,
     email,
     name: profile?.name ?? payload?.name ?? email,
-    roles: profile?.roles?.length ? profile.roles : payload?.roles ?? [],
+    roles: profile?.roles?.length ? profile.roles : parseRoles(payload?.roles),
+    clientOnboardingStatus: profile?.clientOnboardingStatus,
     provider: profile?.provider,
   };
 }
@@ -134,7 +160,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           storedAccessToken &&
           storedRefreshToken &&
           storedUser &&
-          !isExpiringSoon(storedAccessToken)
+          !isExpiringSoon(storedAccessToken) &&
+          !needsFreshClientStatus(storedUser)
         ) {
           if (isMounted) {
             applySession({
@@ -254,6 +281,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [appAccessToken, doRefresh]);
 
   const userId = user?.userId;
+  const accessToken = appAccessToken;
 
   const logout = useCallback(async () => {
     if (userId) {
@@ -264,18 +292,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const roles = user?.roles ?? [];
   const token = appAccessToken;
+  const clientOnboardingStatus = user?.clientOnboardingStatus ?? null;
+  const isAuthenticated = Boolean(appAccessToken && user);
 
   return (
     <Ctx.Provider value={{
+      accessToken,
       appAccessToken,
       refreshToken,
       token,
+      userId: userId ?? null,
       user,
       roles,
+      clientOnboardingStatus,
+      isAuthenticated,
       isLoading,
       setSession,
       setTokens,
       getValidToken,
+      refreshSession: doRefresh,
       logout,
     }}>
       {children}

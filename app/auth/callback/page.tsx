@@ -3,7 +3,11 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/lib/auth-context';
-import { parseRoles } from '@/app/lib/auth-api';
+import {
+  parseClientOnboardingStatus,
+  parseJwt,
+  parseRoles,
+} from '@/app/lib/auth-api';
 
 type AuthCallbackParams = {
   authStatus: string | null;
@@ -15,25 +19,40 @@ type AuthCallbackParams = {
   email: string | null;
   name: string | null;
   roles: string[];
+  clientOnboardingStatus: ReturnType<typeof parseClientOnboardingStatus>;
   state: string | null;
 };
 
 function getCallbackParams(): AuthCallbackParams {
   const searchParams = new URLSearchParams(window.location.search);
   const hashParams = new URLSearchParams(window.location.hash.slice(1));
+  const googleFragmentToken = hashParams.get('token');
   const params = searchParams.toString() ? searchParams : hashParams;
   const roleParams = [...params.getAll('roles'), ...params.getAll('roles[]')];
+  const appAccessToken =
+    hashParams.get('token') ??
+    params.get('token') ??
+    params.get('appAccessToken') ??
+    params.get('accessToken');
+  const refreshToken =
+    hashParams.get('refresh') ??
+    params.get('refresh') ??
+    params.get('refreshToken');
 
   return {
     authStatus: params.get('authStatus'),
-    provider: params.get('provider'),
+    provider: params.get('provider') ?? (googleFragmentToken ? 'google' : null),
     action: params.get('action'),
-    appAccessToken: params.get('appAccessToken'),
-    refreshToken: params.get('refreshToken'),
-    userId: params.get('userId'),
+    appAccessToken,
+    refreshToken,
+    userId: hashParams.get('userId') ?? params.get('userId'),
     email: params.get('email'),
     name: params.get('name'),
     roles: parseRoles(roleParams.length ? roleParams : params.get('roles')),
+    clientOnboardingStatus: parseClientOnboardingStatus(
+      hashParams.get('clientOnboardingStatus') ??
+        params.get('clientOnboardingStatus'),
+    ),
     state: params.get('state'),
   };
 }
@@ -48,6 +67,14 @@ function failedAuthStatus(authStatus: string | null) {
 function safeDashboardRedirect(state: string | null) {
   if (!state || !state.startsWith('/dashboard') || state.startsWith('//')) {
     return '/dashboard/blog';
+  }
+
+  return state;
+}
+
+function safeClientRedirect(state: string | null) {
+  if (!state || !state.startsWith('/loan-portal') || state.startsWith('//')) {
+    return '/loan-portal';
   }
 
   return state;
@@ -68,7 +95,9 @@ export default function CallbackPage() {
       return;
     }
 
-    if (callback.provider?.toLowerCase() !== 'microsoft') {
+    const provider = callback.provider?.toLowerCase() ?? null;
+
+    if (provider !== 'microsoft' && provider !== 'google') {
       router.replace('/auth/login?error=unsupported_provider');
       return;
     }
@@ -78,13 +107,26 @@ export default function CallbackPage() {
       return;
     }
 
-    if (!callback.userId || !callback.email) {
+    const payload = parseJwt(callback.appAccessToken);
+    const roles = callback.roles.length ? callback.roles : parseRoles(payload?.roles);
+    const userId = callback.userId ?? payload?.sub;
+    const email = callback.email ?? payload?.email;
+    const name = callback.name ?? payload?.name;
+
+    if (!userId || !email) {
       router.replace('/auth/login?error=missing_profile');
       return;
     }
 
-    if (!callback.roles.includes('BLOG_EDITOR')) {
-      router.replace('/auth/login?error=unauthorized');
+    const isClient = provider === 'google' && roles.includes('CLIENT');
+    const isBlogEditor = provider === 'microsoft' && roles.includes('BLOG_EDITOR');
+
+    if (!isClient && !isBlogEditor) {
+      router.replace(
+        provider === 'google'
+          ? '/auth/client?error=unauthorized'
+          : '/auth/login?error=unauthorized',
+      );
       return;
     }
 
@@ -92,13 +134,20 @@ export default function CallbackPage() {
       appAccessToken: callback.appAccessToken,
       refreshToken: callback.refreshToken,
       user: {
-        userId: callback.userId,
-        email: callback.email,
-        name: callback.name || callback.email,
-        roles: callback.roles,
-        provider: callback.provider,
+        userId,
+        email,
+        name: name ?? email,
+        roles,
+        clientOnboardingStatus: callback.clientOnboardingStatus,
+        provider,
       },
     });
+
+    if (isClient) {
+      router.replace(safeClientRedirect(callback.state));
+      return;
+    }
+
     router.replace(safeDashboardRedirect(callback.state));
   }, [setSession, router]);
 

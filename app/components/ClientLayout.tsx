@@ -7,7 +7,10 @@ import Footer from './Footer';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const noChrome = pathname?.startsWith('/dashboard') || pathname?.startsWith('/auth');
+  const noChrome =
+    pathname?.startsWith('/dashboard') ||
+    pathname?.startsWith('/auth') ||
+    pathname?.startsWith('/loan-portal');
 
   return (
     <AuthProvider>

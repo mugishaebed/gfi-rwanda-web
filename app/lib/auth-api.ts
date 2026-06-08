@@ -3,7 +3,7 @@ const API =
   process.env.NEXT_PUBLIC_API_URL ??
   'http://localhost:4000';
 
-function buildUrl(path: string) {
+export function buildApiUrl(path: string) {
   return `${API.replace(/\/$/, '')}${path}`;
 }
 
@@ -11,16 +11,22 @@ export type JwtPayload = {
   sub: string;
   email: string;
   name?: string;
-  roles: string[];
+  roles?: unknown;
   exp: number;
   iat: number;
 };
+
+export type ClientOnboardingStatus =
+  | 'PENDING_PROFILE'
+  | 'PENDING_APPROVAL'
+  | 'ACTIVE';
 
 export type AuthUser = {
   userId: string;
   email: string;
   name: string;
   roles: string[];
+  clientOnboardingStatus?: ClientOnboardingStatus;
   provider?: string;
 };
 
@@ -32,12 +38,14 @@ type RefreshResponse = {
   email?: string;
   name?: string;
   roles?: unknown;
+  clientOnboardingStatus?: unknown;
   user?: {
     id?: string;
     userId?: string;
     email?: string;
     name?: string;
     roles?: unknown;
+    clientOnboardingStatus?: unknown;
   };
 };
 
@@ -71,12 +79,32 @@ export function parseRoles(value: unknown): string[] {
     .filter(Boolean);
 }
 
+export function parseClientOnboardingStatus(
+  value: unknown,
+): ClientOnboardingStatus | undefined {
+  if (
+    value === 'PENDING_PROFILE' ||
+    value === 'PENDING_APPROVAL' ||
+    value === 'ACTIVE'
+  ) {
+    return value;
+  }
+
+  return undefined;
+}
+
 /** Decode JWT without verification (signature check is server-side). */
 export function parseJwt(token: string): JwtPayload | null {
   try {
     const segment = token.split('.')[1];
-    // Handle URL-safe base64
-    const json = atob(segment.replace(/-/g, '+').replace(/_/g, '/'));
+    if (!segment) return null;
+
+    const normalized = segment.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      '=',
+    );
+    const json = atob(padded);
     return JSON.parse(json) as JwtPayload;
   } catch {
     return null;
@@ -92,7 +120,7 @@ export function isExpiringSoon(token: string): boolean {
 export async function apiRefresh(
   refreshToken: string,
 ): Promise<RefreshResult> {
-  const res = await fetch(buildUrl('/auth/refresh'), {
+  const res = await fetch(buildApiUrl('/auth/refresh'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refreshToken }),
@@ -116,12 +144,15 @@ export async function apiRefresh(
       email: data.email ?? user?.email,
       name: data.name ?? user?.name,
       roles: parseRoles(data.roles ?? user?.roles),
+      clientOnboardingStatus: parseClientOnboardingStatus(
+        data.clientOnboardingStatus ?? user?.clientOnboardingStatus,
+      ),
     },
   };
 }
 
 export async function apiLogout(userId: string): Promise<void> {
-  await fetch(buildUrl('/auth/logout'), {
+  await fetch(buildApiUrl('/auth/logout'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId }),
@@ -130,18 +161,24 @@ export async function apiLogout(userId: string): Promise<void> {
 
 /** Browser navigates here — do NOT call with fetch. */
 export const microsoftLoginUrl = (origin: string) =>
-  buildUrl(
+  buildApiUrl(
     `/auth/microsoft/login?redirectTo=${encodeURIComponent(`${origin}/auth/callback`)}`,
   );
 
 export const microsoftSignupUrl = (origin: string) =>
-  buildUrl(
+  buildApiUrl(
     `/auth/microsoft/signup?role=BLOG_EDITOR&redirectTo=${encodeURIComponent(
       `${origin}/auth/callback`,
     )}`,
   );
 
 export const microsoftLogoutUrl = (origin: string) =>
-  buildUrl(
+  buildApiUrl(
     `/auth/microsoft/logout?postLogoutRedirectUri=${encodeURIComponent(origin)}`,
   );
+
+export const googleClientLoginUrl = () =>
+  buildApiUrl('/auth/google/client/login');
+
+export const googleClientSignupUrl = () =>
+  buildApiUrl('/auth/google/client/signup');
